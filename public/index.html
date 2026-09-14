@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Background Remover</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ min-height:100vh;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ font-family:Arial,sans-serif;
+ color:white;
+ overflow:hidden;
+ background:
+ radial-gradient(circle at 50% 15%,#fff 0 2px,transparent 3px),
+ radial-gradient(circle at 20% 30%,#fff 0 1px,transparent 2px),
+ radial-gradient(circle at 80% 70%,#fff 0 2px,transparent 3px),
+ radial-gradient(circle at 65% 25%,#fff 0 1px,transparent 2px),
+ linear-gradient(#020617,#090b24,#000);
+}
+
+body:before{
+ content:"";
+ position:fixed;
+ width:150px;height:150px;
+ border-radius:50%;
+ background:#fff;
+ box-shadow:0 0 35px #fff;
+ top:7%;right:10%;
+}
+
+.stars{
+ position:fixed;
+ inset:0;
+ pointer-events:none;
+ background-image:
+ radial-gradient(#fff 1px,transparent 1px),
+ radial-gradient(#fff 1px,transparent 1px);
+ background-size:80px 80px,130px 130px;
+ animation:twinkle 2s infinite alternate;
+ opacity:.7;
+}
+
+@keyframes twinkle{
+ from{opacity:.25}
+ to{opacity:1}
+}
+
+.card{
+ position:relative;
+ z-index:2;
+ width:min(92%,500px);
+ padding:30px;
+ text-align:center;
+ border:1px solid #ffffff30;
+ border-radius:25px;
+ background:#0008;
+ backdrop-filter:blur(15px);
+ box-shadow:0 0 40px #000;
+}
+
+h1{
+ margin:0 0 10px;
+ font-size:30px;
+}
+
+p{
+ color:#bbb;
+}
+
+.upload{
+ display:block;
+ margin:20px 0;
+ padding:18px;
+ border:2px dashed #ffffff55;
+ border-radius:15px;
+ cursor:pointer;
+}
+
+input{display:none}
+
+button{
+ border:0;
+ border-radius:12px;
+ padding:13px 22px;
+ font-size:16px;
+ font-weight:bold;
+ cursor:pointer;
+}
+
+#status{
+ margin:18px 0;
+ color:#ddd;
+}
+
+#preview{
+ max-width:100%;
+ max-height:300px;
+ margin-top:15px;
+ border-radius:15px;
+ display:none;
+}
+
+.dev{
+ margin-top:25px;
+ font-size:13px;
+ color:#888;
+}
+</style>
+</head>
+
+<body>
+
+<div class="stars"></div>
+
+<div class="card">
+  <h1>🌙 AI Background Remover</h1>
+  <p>Hapus background foto secara otomatis</p>
+
+  <label class="upload">
+    📷 Pilih gambar
+    <input type="file" id="file" accept="image/*">
+  </label>
+
+  <button id="remove">✂️ Hapus Background</button>
+
+  <div id="status"></div>
+
+  <img id="preview">
+
+  <br>
+
+  <button id="download" style="display:none">
+    ⬇️ Download PNG
+  </button>
+
+  <div class="dev">
+    Developer: Faris • Yanz • Semz
+  </div>
+</div>
+
+<script>
+const fileInput=document.getElementById("file");
+const removeBtn=document.getElementById("remove");
+const status=document.getElementById("status");
+const preview=document.getElementById("preview");
+const download=document.getElementById("download");
+
+let resultBlob=null;
+
+fileInput.onchange=()=>{
+ const file=fileInput.files[0];
+ if(file){
+   status.textContent="Gambar siap diproses.";
+   preview.src=URL.createObjectURL(file);
+   preview.style.display="block";
+   download.style.display="none";
+ }
+};
+
+removeBtn.onclick=async()=>{
+ const file=fileInput.files[0];
+
+ if(!file){
+   status.textContent="Pilih gambar terlebih dahulu.";
+   return;
+ }
+
+ removeBtn.disabled=true;
+ status.textContent="⏳ Sedang menghapus background...";
+
+ const form=new FormData();
+ form.append("image",file);
+
+ try{
+   const response=await fetch("/api/remove",{
+     method:"POST",
+     body:form
+   });
+
+   if(!response.ok){
+     const error=await response.json().catch(()=>({}));
+     throw new Error(error.error||"Gagal memproses gambar");
+   }
+
+   resultBlob=await response.blob();
+
+   preview.src=URL.createObjectURL(resultBlob);
+   preview.style.display="block";
+
+   download.style.display="inline-block";
+   status.textContent="✅ Background berhasil dihapus!";
+ }catch(error){
+   status.textContent="❌ "+error.message;
+ }finally{
+   removeBtn.disabled=false;
+ }
+};
+
+download.onclick=()=>{
+ if(!resultBlob)return;
+
+ const url=URL.createObjectURL(resultBlob);
+ const a=document.createElement("a");
+
+ a.href=url;
+ a.download="background-removed.png";
+ a.click();
+
+ URL.revokeObjectURL(url);
+};
+</script>
+
+</body>
+  </html>
