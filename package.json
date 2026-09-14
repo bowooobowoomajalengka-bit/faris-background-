@@ -1,0 +1,10 @@
+{
+  "name": "slazzer-background-remover",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.11.0",
+    "form-data": "^4.0.4",
+    "formidable": "^3.5.4"
+  }
+}
